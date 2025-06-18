@@ -2,19 +2,43 @@ import Book from "../models/Book.js";
 
 // Get all books (with optional pagination)
 export const getBooks = async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = 10;
-  const skip = (page - 1) * limit;
-
-  const total = await Book.countDocuments();
-  const books = await Book.find().skip(skip).limit(limit);
-
-  res.json({
-    page,
-    totalPages: Math.ceil(total / limit),
-    books,
-  });
-};
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = 10;
+      const skip = (page - 1) * limit;
+  
+      const keyword = req.query.keyword
+        ? {
+            $or: [
+              { title: { $regex: req.query.keyword, $options: "i" } },
+              { author: { $regex: req.query.keyword, $options: "i" } },
+            ],
+          }
+        : {};
+  
+      const genre = req.query.genre
+        ? { genre: { $in: [req.query.genre] } }
+        : {};
+  
+      const publishedYear = req.query.publishedYear
+        ? { publishedYear: req.query.publishedYear }
+        : {};
+  
+      const filter = { ...keyword, ...genre, ...publishedYear };
+  
+      const total = await Book.countDocuments(filter);
+      const books = await Book.find(filter).skip(skip).limit(limit);
+  
+      res.json({
+        page,
+        totalPages: Math.ceil(total / limit),
+        books,
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch books" });
+    }
+  };
+  
 
 // Get a single book by ID
 export const getBookById = async (req, res) => {
