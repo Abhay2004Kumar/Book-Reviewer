@@ -21,6 +21,11 @@ app.use("/api/users", userRoutes);
 app.use("/api/books", bookRoutes);
 app.use("/api/reviews", reviewRoutes);
 
+// Root route to avoid "Not Found - /" error
+app.get("/", (req, res) => {
+    res.send("API is running...");
+  });
+
 // Error handling middleware
 app.use(notFound);
 app.use(errorHandler);
